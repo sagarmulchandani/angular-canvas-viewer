@@ -1,4 +1,4 @@
-angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http', '$timeout', '$q', function($window, $http, $timeout, $q){
+angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http', '$timeout', '$q', 'hmTouchEvents', function($window, $http, $timeout, $q, hmTouchEvents){
 	var formatReader = new FormatReader();
 
 	return {
@@ -24,12 +24,16 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 				'ng-mouseup="mouseup($event)"'+
 				'ng-init="canMove=false"'+
 				'ng-mousemove="mousedrag($event,canMove)">'+
+				'hmPanend="canMove=false' +
+				'hmPanmove="mousedrag($event,canMove)' +
+				'hmPanup="mouseup($event)"' +
+				'hmPandown="mousedown($event)"' +
 				'</canvas>'+
 				'<div class="title" ng-if="title!=null">{{title}}</div>'+
 				'<div class="command" ng-if="options.controls.image">'+
 				'<div class="btn btn-info" ng-click="options.controls.numPage=options.controls.numPage-1" ng-hide="options.controls.totalPage==1"><i class="fa fa-minus"></i></div>'+
 				'<div class="btn btn-info" ng-hide="options.controls.totalPage==1">{{options.controls.numPage}}/{{options.controls.totalPage}}</div>'+
-				'<div class="btn btn-info" ng-click="options.controls.numPage=options.controls.numPage+1" ng-hide="options.controls.totalPage==1"><i class="fa fa-plus"></i></div>'+				
+				'<div class="btn btn-info" ng-click="options.controls.numPage=options.controls.numPage+1" ng-hide="options.controls.totalPage==1"><i class="fa fa-plus"></i></div>'+
 				'<div class="btn btn-info" ng-click="resizeTo(\'page\')"><i class="fa fa-file-o"></i></div>'+
 				'<div class="btn btn-info" ng-click="rotate(-1)" ng-hide="options.controls.disableRotate"><i class="fa fa-rotate-left"></i></div>'+
 				'<div class="btn btn-info" ng-click="rotate(1)" ng-hide="options.controls.disableRotate"><i class="fa fa-rotate-right"></i></div>'+
@@ -53,7 +57,7 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 			var canvasSize = canvasEl.parentNode;
 			ctx.canvas.width  = canvasSize.clientWidth;
 			ctx.canvas.height = canvasSize.clientHeight;
-			var resize = { height : canvasSize.clientHeight, width : canvasSize.clientWidth};			
+			var resize = { height : canvasSize.clientHeight, width : canvasSize.clientWidth};
 			// initialize variable
 			// var img = null;
 			var curPos = { x : 0, y : 0};
@@ -161,7 +165,7 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 			});
 
 			scope.$watch('options.controls.filmStrip', function(position) {
-				
+
 				if (position) {
 					scope.options.controls.disableMove = true;
 					scope.options.controls.disableRotate = true;
@@ -267,16 +271,16 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 					}
 					// Draw image at correct position with correct scale
 					if (reader.data != null) {
-	    				ctx.putImageData(reader.data, picPos.x, picPos.y);					
+	    				ctx.putImageData(reader.data, picPos.x, picPos.y);
 						ctx.beginPath();
 						ctx.rect( 0, 0, reader.width , reader.height );
 						ctx.lineWidth = 0.2;
 						ctx.strokeStyle = "#000000";
 						ctx.stroke();
-					} 
+					}
 				} else {
 					if (reader.images != null) {
-						angular.forEach(reader.images, function(image) { 
+						angular.forEach(reader.images, function(image) {
 							ctx.drawImage(image, 0 , 0 , image.width , image.height);
 							ctx.beginPath();
 							ctx.rect(0, 0, image.width , image.height );
@@ -289,8 +293,8 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 					// Draw image at correct position with correct scale
 					if (reader.data != null) {
 						var offsetY = 0;
-						angular.forEach(reader.data, function(data) { 
-		    				ctx.putImageData(data, picPos.x, picPos.y + offsetY);					
+						angular.forEach(reader.data, function(data) {
+		    				ctx.putImageData(data, picPos.x, picPos.y + offsetY);
 							ctx.beginPath();
 							ctx.rect( 0, 0, reader.width , reader.height );
 							ctx.lineWidth = 0.2;
@@ -299,7 +303,7 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 							offsetY += reader.height + 15;
 							ctx.translate(0, offsetY);
 						});
-					} 
+					}
 				}
 				// Restore
 				ctx.restore();
@@ -397,7 +401,7 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 						reader.refresh();
 					}
 
-					
+
 					// Compute new image size
 					if (!reader.isZoom) {
 						newWidth = reader.width;
@@ -409,7 +413,7 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 					// new image position after zoom
 					picPos.x = picPos.x - (newWidth - oldWidth)/2;
 					picPos.y = picPos.y - (newHeight - oldHeight)/2;
-				});				
+				});
 			}
 
 			scope.rotate = function(direction) {
@@ -442,7 +446,7 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 				// If reader render zoom itself
 				// Precompute from its ratio
 				if (!reader.isZoom) {
-					ratioH *= scope.options.zoom.value;				
+					ratioH *= scope.options.zoom.value;
 					ratioW *= scope.options.zoom.value;
 				}
 				// Adjust value
@@ -450,7 +454,7 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 					case 'width' : scope.options.zoom.value = ratioW; break;
 					case 'height' : scope.options.zoom.value = ratioH; break;
 					case 'page' :
-					default : scope.options.zoom.value = Math.min(ratioH,ratioW); 
+					default : scope.options.zoom.value = Math.min(ratioH,ratioW);
 				}
 				scope.$applyAsync(function() {
 					// Round zoom value
@@ -483,7 +487,7 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 					scope.options.adsrc.stop(0);
 				}
 			}
-			
+
 			function resizeCanvas() {
 				scope.$applyAsync(function() {
 					var canvasSize = canvasEl.parentNode;
@@ -505,7 +509,7 @@ angular.module('CanvasViewer',[]).directive('canvasViewer', ['$window', '$http',
 			}
 			//
 			scope.$watch(parentChange, function() {
-					resizeCanvas();	
+					resizeCanvas();
 			}, true);
    //      	// resize canvas on window resize to keep aspect ratio
 			// angular.element($window).bind('resize', function() {
